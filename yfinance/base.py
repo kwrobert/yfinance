@@ -52,6 +52,7 @@ class TickerBase():
         self._info = None
         self._sustainability = None
         self._recommendations = None
+        self._holdings_breakdown = None
         self._major_holders = None
         self._institutional_holders = None
         self._isin = None
@@ -282,14 +283,18 @@ class TickerBase():
         # holders
         url = "{}/{}/holders".format(self._scrape_url, self.ticker)
         holders = _pd.read_html(url)
-        self._major_holders = holders[0]
-        self._institutional_holders = holders[1]
-        if 'Date Reported' in self._institutional_holders:
-            self._institutional_holders['Date Reported'] = _pd.to_datetime(
-                self._institutional_holders['Date Reported'])
-        if '% Out' in self._institutional_holders:
-            self._institutional_holders['% Out'] = self._institutional_holders[
-                '% Out'].str.replace('%', '').astype(float)/100
+        self._holdings_breakdown = holders[0]
+        # Sometimes the page only has breakdown of high level percentages of where
+        # ownership is, and doesn't list who owns holdings and major holders
+        if len(holders) > 1:
+            self._major_holders = holders[1]
+            self._institutional_holders = holders[2]
+            if 'Date Reported' in self._institutional_holders:
+                self._institutional_holders['Date Reported'] = _pd.to_datetime(
+                    self._institutional_holders['Date Reported'])
+            if '% Out' in self._institutional_holders:
+                self._institutional_holders['% Out'] = self._institutional_holders[
+                    '% Out'].str.replace('%', '').astype(float)/100
 
         # sustainability
         d = {}
